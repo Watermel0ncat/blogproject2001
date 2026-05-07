@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Blog</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 200px;
+    height: 100vh;
+    background: #111827;
+    position: fixed;
+    padding: 20px;
+}
+
+.sidebar button {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    background: #1f2937;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.sidebar button:hover {
+    background: #374151;
+}
+
+/* MAIN */
+.main {
+    margin-left: 220px;
+    padding: 20px;
+}
+
+.card {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+/* POSTS */
+.post {
+    border-bottom: 1px solid #334155;
+    padding: 10px 0;
+}
+
+/* LOGIN MODAL */
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-box {
+    background: #111827;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 6px;
+    border: none;
+}
+
+button {
+    cursor: pointer;
+}
+
+.hidden { display: none; }
+
+/* 🌐 ADDED: preview styling */
+iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+    border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h3>My Blog</h3>
+    <button onclick="show('home')">Home</button>
+    <button onclick="show('posts')">Posts</button>
+    <button onclick="show('admin')">Admin</button>
+    <button onclick="show('clock')">Clock</button>
+
+    <!-- 🌐 ADDED -->
+    <button onclick="show('preview')">Preview</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- HOME -->
+<div id="home" class="page">
+    <div class="card">
+        <h2>Welcome</h2>
+        <p>Simple personal blog.</p>
+    </div>
+</div>
+
+<!-- POSTS -->
+<div id="posts" class="page hidden">
+    <div class="card">
+        <h2>Posts</h2>
+        <div id="postList"></div>
+    </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="page hidden">
+    <div class="card">
+        <h2>Admin Panel</h2>
+
+        <div id="editor" class="hidden">
+            <input id="title" placeholder="Title">
+            <textarea id="content" placeholder="Write post..."></textarea>
+            <button onclick="addPost()">Publish</button>
+        </div>
+
+        <p id="status">Not logged in</p>
+        <button onclick="openLogin()">Login</button>
+    </div>
+</div>
+
+<!-- CLOCK -->
+<div id="clock" class="page hidden">
+    <div class="card">
+        <h2>Pacific Time</h2>
+        <h1 id="time"></h1>
+    </div>
+</div>
+
+<!-- 🌐 ADDED: WEB PREVIEW PAGE -->
+<div id="preview" class="page hidden">
+    <div class="card">
+        <h2>Web Preview</h2>
+
+        <input id="urlInput" placeholder="Enter website URL (https://...)">
+        <button onclick="loadPreview()">Load</button>
+
+        <br><br>
+
+        <iframe id="previewFrame"></iframe>
+    </div>
+</div>
+
+</div>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="modal hidden">
+    <div class="modal-box">
+        <h3>Admin Login</h3>
+        <input type="password" id="pass" placeholder="Password">
+        <button onclick="login()">Enter</button>
+        <button onclick="closeLogin()">Cancel</button>
+    </div>
+</div>
+
+<script>
+
+// ---------------- SHA-256 HASH ----------------
+async function hash(str) {
+    const buf = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(str)
+    );
+    return Array.from(new Uint8Array(buf))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+const PASSWORD_HASH = "9f64a747e1b97a3c1c6f0f2d2c7b1f8a0c8c2b5f9a6a0f5d3c2e1d4b7a9f123";
+
+let loggedIn = false;
+
+// ---------------- NAV ----------------
+function show(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.getElementById(page).classList.remove('hidden');
+}
+
+// ---------------- POSTS ----------------
+function getPosts() {
+    return JSON.parse(localStorage.getItem("posts") || "[]");
+}
+
+function savePosts(posts) {
+    localStorage.setItem("posts", JSON.stringify(posts));
+}
+
+function renderPosts() {
+    const list = document.getElementById("postList");
+    list.innerHTML = "";
+
+    getPosts().reverse().forEach(p => {
+        const div = document.createElement("div");
+        div.className = "post";
+        div.innerHTML = `<h3>${p.title}</h3><p>${p.content}</p>`;
+        list.appendChild(div);
+    });
+}
+
+function addPost() {
+    if (!loggedIn) return;
+
+    const posts = getPosts();
+    posts.push({
+        title: document.getElementById("title").value,
+        content: document.getElementById("content").value
+    });
+
+    savePosts(posts);
+    renderPosts();
+}
+
+// ---------------- LOGIN ----------------
+function openLogin() {
+    document.getElementById("loginModal").classList.remove("hidden");
+}
+
+function closeLogin() {
+    document.getElementById("loginModal").classList.add("hidden");
+}
+
+async function login() {
+    const input = document.getElementById("pass").value;
+    const hashed = await hash(input);
+
+    if (hashed === PASSWORD_HASH) {
+        loggedIn = true;
+        document.getElementById("status").innerText = "Logged in ✔";
+        document.getElementById("editor").classList.remove("hidden");
+        closeLogin();
+    } else {
+        alert("Wrong password");
+    }
+}
+
+// ---------------- CLOCK ----------------
+function updateClock() {
+    const time = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Los_Angeles",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+    }).format(new Date());
+
+    document.getElementById("time").innerText = time;
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+// ---------------- 🌐 ADDED: WEB PREVIEW ----------------
+function loadPreview() {
+    const url = document.getElementById("urlInput").value;
+    document.getElementById("previewFrame").src = url;
+}
+
+renderPosts();
+
+</script>
+
+</body>
+</html>
