@@ -194,7 +194,7 @@ async function hash(str) {
         .join("");
 }
 
-const PASSWORD_HASH = "e88b82f60959eaaa90aeb84f8c90e1eef67f64064a77367b0513a4993d0b3335";
+const PASSWORD_HASH = "169h";
 
 let loggedIn = false;
 
@@ -249,9 +249,9 @@ function closeLogin() {
 
 async function login() {
     const input = document.getElementById("pass").value;
-    const hashed = await hash(input);
+    const hashed = await input;
 
-    if (hashed === PASSWORD_HASH) {
+    if (input === PASSWORD_HASH) {
         loggedIn = true;
         document.getElementById("status").innerText = "Logged in ✔";
         document.getElementById("editor").classList.remove("hidden");
@@ -276,7 +276,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// ---------------- 🌐 ADDED: WEB PREVIEW ----------------
+// ---------------- WEB PREVIEW ----------------
 function loadPreview() {
     const url = document.getElementById("urlInput").value;
     document.getElementById("previewFrame").src = url;
