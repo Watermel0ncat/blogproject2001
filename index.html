@@ -231,19 +231,18 @@ function loadPreview() {
 
 <!-- Updated Firebase Module -->
 <script type="module">
-  // These MUST be the full paths to the .js files
-  import { initializeApp } from "https://gstatic.com";
-  import { getDatabase, ref, push, onValue, remove } from "https://gstatic.com";
+   // ✅ THESE MUST BE THE FULL PATHS ENDING IN .JS
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAs-n0foyw5FDSmmxm_9H-cZTDIRmTEQpk",
-    authDomain: "://firebaseapp.com",
-    projectId: "blog-a982c",
-    storageBucket: "blog-a982c.firebasestorage.app",
-    messagingSenderId: "666720378473",
-    appId: "1:666720378473:web:672d8f0de10b70f2418cf8",
-    databaseURL: "https://firebaseio.com" 
-  };
+ const firebaseConfig = {
+  apiKey: "AIzaSyAs-n0foyw5FDSmmxm_9H-cZTDIRmTEQpk",
+  authDomain: "blog-a982c.firebaseapp.com",
+  projectId: "blog-a982c",
+  storageBucket: "blog-a982c.firebasestorage.app",
+  messagingSenderId: "666720378473",
+  appId: "1:666720378473:web:672d8f0de10b70f2418cf8"
+};
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
