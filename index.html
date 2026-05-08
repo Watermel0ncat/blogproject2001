@@ -232,11 +232,11 @@ function loadPreview() {
 <!-- Updated Firebase Module -->
 <script type="module">
   import { initializeApp } from "https://gstatic.com";
-  import { getDatabase, ref, push, onValue } from "https://gstatic.com";
+  import { getDatabase, ref, push, onValue, remove } from "https://gstatic.com";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAs-n0foyw5FDSmmxm_9H-cZTDIRmTEQpk",
-    authDomain: "blog-a982c.firebaseapp.com",
+    authDomain: "://firebaseapp.com",
     projectId: "blog-a982c",
     storageBucket: "blog-a982c.firebasestorage.app",
     messagingSenderId: "666720378473",
@@ -247,10 +247,9 @@ function loadPreview() {
   const db = getDatabase(app);
   const postsRef = ref(db, 'posts');
 
-  // 1. SAVE TO INTERNET (Triggered by your Publish button)
+  // 1. SAVE: Function to send a post to the internet
   window.addPost = function() {
     if (!loggedIn) return;
-    
     const titleInput = document.getElementById("title");
     const contentInput = document.getElementById("content");
 
@@ -260,27 +259,44 @@ function loadPreview() {
       timestamp: Date.now()
     });
 
-    // Clear inputs after publishing
     titleInput.value = "";
     contentInput.value = "";
-    alert("Posted to the internet!");
   };
 
-  // 2. VIEW FROM INTERNET (Runs automatically for everyone)
+  // 2. DELETE: Function to remove a post
+  window.deletePost = function(postId) {
+    if (!loggedIn) return; // Only the logged-in admin can delete
+    if (confirm("Delete this post?")) {
+      const postToDelete = ref(db, 'posts/' + postId);
+      remove(postToDelete);
+    }
+  };
+
+  // 3. VIEW: Automatically display posts for everyone
   const list = document.getElementById("postList");
   onValue(postsRef, (snapshot) => {
-    list.innerHTML = ""; // Clear current list
+    list.innerHTML = "";
     
+    // Convert snapshot to array to reverse it
     const posts = [];
     snapshot.forEach((childSnapshot) => {
-      posts.push(childSnapshot.val());
+      posts.push({
+        id: childSnapshot.key, // We need the ID for deleting
+        ...childSnapshot.val()
+      });
     });
 
-    // Show newest first
     posts.reverse().forEach(p => {
         const div = document.createElement("div");
         div.className = "post";
-        div.innerHTML = `<h3>${p.title}</h3><p>${p.content}</p>`;
+        
+        // Only show delete button if the user is currently logged in
+        let deleteBtn = loggedIn ? `<button onclick="deletePost('${p.id}')" style="color:red; background:none; border:none; cursor:pointer;">[Delete]</button>` : "";
+        
+        div.innerHTML = `
+            <h3>${p.title} ${deleteBtn}</h3>
+            <p>${p.content}</p>
+        `;
         list.appendChild(div);
     });
   });
