@@ -284,6 +284,47 @@ function loadPreview() {
 
 renderPosts();
 
+    <!-- Script A: Initialize Firebase (Get these values from your Firebase Console) -->
+<script type="module">
+  import { initializeApp } from "https://gstatic.com";
+  import { getDatabase, ref, push, onValue } from "https://gstatic.com";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAs-n0foyw5FDSmmxm_9H-cZTDIRmTEQpk",
+  authDomain: "blog-a982c.firebaseapp.com",
+  projectId: "blog-a982c",
+  storageBucket: "blog-a982c.firebasestorage.app",
+  messagingSenderId: "666720378473",
+  appId: "1:666720378473:web:672d8f0de10b70f2418cf8"
+};
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // --- SCRIPT B: BLOG LOGIC ---
+
+  // 1. SAVE: Function to send a post to the internet
+  window.savePost = function(postText) {
+    const postsRef = ref(db, 'posts');
+    push(postsRef, {
+      content: postText,
+      timestamp: Date.now()
+    });
+  };
+
+  // 2. SHOW: Automatically fetch and display posts for everyone
+  const postsDisplay = document.getElementById('blog-posts'); // Ensure you have this div in your HTML
+  onValue(ref(db, 'posts'), (snapshot) => {
+    postsDisplay.innerHTML = ""; // Clear current list
+    snapshot.forEach((childSnapshot) => {
+      const post = childSnapshot.val();
+      const postElement = document.createElement('div');
+      postElement.innerText = post.content;
+      postsDisplay.prepend(postElement); // Newest posts first
+    });
+  });
+</script>
+
 </script>
 
 </body>
