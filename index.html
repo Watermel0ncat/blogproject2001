@@ -182,63 +182,16 @@ iframe {
 </div>
 
 <script>
-
-// ---------------- SHA-256 HASH ----------------
-async function hash(str) {
-    const buf = await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(str)
-    );
-    return Array.from(new Uint8Array(buf))
-        .map(b => b.toString(16).padStart(2, "0"))
-        .join("");
-}
-
-const PASSWORD_HASH = "169h";
-
-let loggedIn = false;
-
 // ---------------- NAV ----------------
 function show(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
     document.getElementById(page).classList.remove('hidden');
 }
 
-// ---------------- POSTS ----------------
-function getPosts() {
-    return JSON.parse(localStorage.getItem("posts") || "[]");
-}
-
-function savePosts(posts) {
-    localStorage.setItem("posts", JSON.stringify(posts));
-}
-
-function renderPosts() {
-    const list = document.getElementById("postList");
-    list.innerHTML = "";
-
-    getPosts().reverse().forEach(p => {
-        const div = document.createElement("div");
-        div.className = "post";
-        div.innerHTML = `<h3>${p.title}</h3><p>${p.content}</p>`;
-        list.appendChild(div);
-    });
-}
-
-function addPost() {
-    if (!loggedIn) return;
-
-    const posts = getPosts();
-    posts.push({
-        title: document.getElementById("title").value,
-        content: document.getElementById("content").value
-    });
-
-    savePosts(posts);
-    renderPosts();
-}
-
 // ---------------- LOGIN ----------------
+let loggedIn = false;
+const PASSWORD_HASH = "169h"; // Keep your simple check
+
 function openLogin() {
     document.getElementById("loginModal").classList.remove("hidden");
 }
@@ -247,10 +200,8 @@ function closeLogin() {
     document.getElementById("loginModal").classList.add("hidden");
 }
 
-async function login() {
+function login() {
     const input = document.getElementById("pass").value;
-    const hashed = await input;
-
     if (input === PASSWORD_HASH) {
         loggedIn = true;
         document.getElementById("status").innerText = "Logged in ✔";
@@ -264,15 +215,10 @@ async function login() {
 // ---------------- CLOCK ----------------
 function updateClock() {
     const time = new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/Los_Angeles",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
+        timeZone: "America/Los_Angeles", hour: "2-digit", minute: "2-digit", second: "2-digit"
     }).format(new Date());
-
     document.getElementById("time").innerText = time;
 }
-
 setInterval(updateClock, 1000);
 updateClock();
 
@@ -281,46 +227,61 @@ function loadPreview() {
     const url = document.getElementById("urlInput").value;
     document.getElementById("previewFrame").src = url;
 }
-
-renderPosts();
 </script>
-    <!-- Script A: Initialize Firebase (Get these values from your Firebase Console) -->
+
+<!-- Updated Firebase Module -->
 <script type="module">
   import { initializeApp } from "https://gstatic.com";
   import { getDatabase, ref, push, onValue } from "https://gstatic.com";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAs-n0foyw5FDSmmxm_9H-cZTDIRmTEQpk",
-  authDomain: "blog-a982c.firebaseapp.com",
-  projectId: "blog-a982c",
-  storageBucket: "blog-a982c.firebasestorage.app",
-  messagingSenderId: "666720378473",
-  appId: "1:666720378473:web:672d8f0de10b70f2418cf8"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyAs-n0foyw5FDSmmxm_9H-cZTDIRmTEQpk",
+    authDomain: "blog-a982c.firebaseapp.com",
+    projectId: "blog-a982c",
+    storageBucket: "blog-a982c.firebasestorage.app",
+    messagingSenderId: "666720378473",
+    appId: "1:666720378473:web:672d8f0de10b70f2418cf8"
+  };
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const postsRef = ref(db, 'posts');
 
-  // --- SCRIPT B: BLOG LOGIC ---
+  // 1. SAVE TO INTERNET (Triggered by your Publish button)
+  window.addPost = function() {
+    if (!loggedIn) return;
+    
+    const titleInput = document.getElementById("title");
+    const contentInput = document.getElementById("content");
 
-  // 1. SAVE: Function to send a post to the internet
-  window.savePost = function(postText) {
-    const postsRef = ref(db, 'posts');
     push(postsRef, {
-      content: postText,
+      title: titleInput.value,
+      content: contentInput.value,
       timestamp: Date.now()
     });
+
+    // Clear inputs after publishing
+    titleInput.value = "";
+    contentInput.value = "";
+    alert("Posted to the internet!");
   };
 
-  // 2. SHOW: Automatically fetch and display posts for everyone
-  const postsDisplay = document.getElementById('blog-posts'); // Ensure you have this div in your HTML
-  onValue(ref(db, 'posts'), (snapshot) => {
-    postsDisplay.innerHTML = ""; // Clear current list
+  // 2. VIEW FROM INTERNET (Runs automatically for everyone)
+  const list = document.getElementById("postList");
+  onValue(postsRef, (snapshot) => {
+    list.innerHTML = ""; // Clear current list
+    
+    const posts = [];
     snapshot.forEach((childSnapshot) => {
-      const post = childSnapshot.val();
-      const postElement = document.createElement('div');
-      postElement.innerText = post.content;
-      postsDisplay.prepend(postElement); // Newest posts first
+      posts.push(childSnapshot.val());
+    });
+
+    // Show newest first
+    posts.reverse().forEach(p => {
+        const div = document.createElement("div");
+        div.className = "post";
+        div.innerHTML = `<h3>${p.title}</h3><p>${p.content}</p>`;
+        list.appendChild(div);
     });
   });
 </script>
