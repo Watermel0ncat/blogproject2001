@@ -1,2 +1,1 @@
-This project is currently non-functional
-idk y
+I FIXEDDD IT YAY!!!!!!!!!!!!!!
